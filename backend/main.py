@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from app.db.database import engine, Base
-
+from app import models
 
 # 데이터베이스 테이블 생성
+# 모든 모델 클래스 검사 + 존재하지 않는 테이블 생성
 def init_db():
     """데이터베이스 테이블 초기화"""
     Base.metadata.create_all(bind=engine)
-
 
 # 애플리케이션 생성
 app = FastAPI(

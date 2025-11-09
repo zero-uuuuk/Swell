@@ -1,32 +1,54 @@
 # HCI Fashion Recommendation Backend
 
-FastAPI + PostgreSQL + Docker
+FastAPI 기반 추천 시스템 백엔드.
 
 ## 📋 사전 요구사항
 
-- **Docker** & **Docker Compose** 설치 필요
-  - [Docker Desktop 다운로드](https://www.docker.com/products/docker-desktop)
-  - 설치 확인: `docker --version`, `docker-compose --version`
+- **Python 3.13+**
+- **pip** / **venv**
+- **Docker & Docker Compose** (PostgreSQL 컨테이너용)
 
-## 🚀 빠른 시작
+## 🚀 로컬 개발 환경 설정
 
 ```bash
 cd backend
 
-# 실행
-docker-compose up --build
+# 1) 가상환경 생성 및 활성화
+python -m venv .venv
+source .venv/bin/activate    # Windows: .venv\Scripts\activate
 
-# 백그라운드 실행
-docker-compose up -d --build
+# 2) 의존성 설치
+pip install --upgrade pip
+pip install -r requirements.txt
 
-# 중지
+# 3) 환경 변수 설정 (.env)
+cp .env.example .env          # 파일이 없다면 직접 생성
+```
+
+`.env` 파일(또는 쉘 환경 변수)에 아래 값을 지정하세요.
+
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/hci_fashion_db
+```
+
+## 🗄 PostgreSQL 컨테이너 실행
+
+```bash
+docker-compose up -d          # DB만 실행
+
+# 종료 시
 docker-compose down
 ```
 
-### 접속
+## ▶️ 애플리케이션 실행
 
-- **API**: http://localhost:8000
-- **API 문서**: http://localhost:8000/docs
+```bash
+# 가상환경이 활성화된 상태에서
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+- **API**: http://localhost:8000  
+- **API 문서**: http://localhost:8000/docs  
 - **PostgreSQL**: localhost:5432
 
 ## 📁 프로젝트 구조
@@ -34,25 +56,13 @@ docker-compose down
 ```
 backend/
 ├── app/
-│   ├── db/          # DB 설정 (database.py)
-│   ├── models/      # SQLAlchemy 모델 (base.py)
-│   ├── routers/     # API 라우터
-│   ├── schemas/     # Pydantic 스키마
-│   ├── crud/        # CRUD 작업
-│   └── services/    # 비즈니스 로직
-├── main.py          # FastAPI 진입점
-├── requirements.txt # 의존성
-├── Dockerfile       # 컨테이너 설정
-└── docker-compose.yml
+│   ├── db/              # DB 설정 (database.py)
+│   ├── models/          # SQLAlchemy 모델
+│   ├── routers/         # API 라우터
+│   ├── schemas/         # Pydantic 스키마
+│   ├── crud/            # CRUD 작업
+│   └── services/        # 비즈니스 로직
+├── main.py              # FastAPI 진입점
+├── requirements.txt     # 의존성 목록
+├── docker-compose.yml   # PostgreSQL 전용 컴포즈
 ```
-
-## 📝 주요 명령어
-
-```bash
-# 로그 확인
-docker-compose logs -f web
-
-# DB 접속
-docker-compose exec db psql -U postgres -d hci_fashion_db
-```
-

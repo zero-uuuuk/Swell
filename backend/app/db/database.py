@@ -7,25 +7,26 @@ from dotenv import load_dotenv
 # 환경 변수 로드
 load_dotenv()
 
-# 데이터베이스 URL
+# 데이터베이스 URL 로딩
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/hci_fashion_db"
 )
 
-# Engine 생성
+# Engine 생성(Application에서 공유할 DB connection pool 생성)
 engine = create_engine(
-    DATABASE_URL,
+    DATABASE_URL,   
     pool_pre_ping=True,  # 연결 상태 확인
     echo=True  # 개발 환경에서 SQL 쿼리 로깅
 )
 
-# SessionLocal 생성
+# SessionLocal 생성(Application에서 공유할 DB session 생성)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base 클래스 생성
+# Base 클래스 생성ㅇ
 Base = declarative_base()
 
+# Transaction을 위한 DB session 제공 함수
 def get_db():
     """
     데이터베이스 세션 의존성 주입
