@@ -4,7 +4,7 @@ FastAPI 기반 추천 시스템 백엔드.
 
 ## 📋 사전 요구사항
 
-- **Python 3.13+**
+- **Python 3.11**
 - **pip** / **venv**
 - **Docker & Docker Compose** (PostgreSQL 컨테이너용)
 
@@ -13,9 +13,10 @@ FastAPI 기반 추천 시스템 백엔드.
 ```bash
 cd backend
 
-# 1) 가상환경 생성 및 활성화
-python -m venv .venv
+# 1) 가상환경 생성 및 활성화(if use Mac brew: /opt/homebrew/bin/python3.11 -m venv .venv) 
+python -m venv .venv    
 source .venv/bin/activate    # Windows: .venv\Scripts\activate
+                            
 
 # 2) 의존성 설치
 pip install --upgrade pip
