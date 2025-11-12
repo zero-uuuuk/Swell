@@ -4,6 +4,7 @@ from app.models.coordi import Coordi
 from app.models.coordi_image import CoordiImage
 from app.models.coordi_item import CoordiItem
 from app.models.fitting_result import FittingResult
+from app.models.fitting_result_item import FittingResultItem
 from app.models.fitting_result_image import FittingResultImage
 from app.models.item import Item
 from app.models.item_image import ItemImage
@@ -19,6 +20,7 @@ __all__ = [
     "Item",
     "Coordi",
     "FittingResult",
+    "FittingResultItem",
     "UserImage",
     "ItemImage",
     "CoordiImage",

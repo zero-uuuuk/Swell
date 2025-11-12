@@ -4,6 +4,7 @@ CREATE TABLE Users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100),
+    gender ENUM('MALE', 'FEMALE') COMMENT '사용자 성별',
     preferred_tags TEXT COMMENT '사용자 선호 태그 (콤마 구분 텍스트)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -12,7 +13,7 @@ CREATE TABLE Users (
 CREATE TABLE Items (
     item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     item_name VARCHAR(255) NOT NULL,
-    item_type ENUM('상의', '하의', '신발', '가방', '모자') NOT NULL,
+    item_type ENUM('상의', '하의', '아우터') NOT NULL,
     brand_name_ko VARCHAR(100),
     price DECIMAL(10, 2),
     purchase_url VARCHAR(1024),
@@ -25,7 +26,8 @@ CREATE TABLE Items (
 CREATE TABLE Coordis (
     coordi_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     season ENUM('SPRING', 'SUMMER', 'FALL', 'WINTER') COMMENT '4계절 (필터링용)',
-    style ENUM('CASUAL', 'STREET', 'FORMAL', 'MINIMAL') COMMENT '코디 무드/스타일',
+    style ENUM('CASUAL', 'STREET', 'SPORTY', 'MINIMAL') COMMENT '코디 무드/스타일',
+    gender ENUM('MALE', 'FEMALE') COMMENT '코디 대상 성별',
     description TEXT COMMENT '태그 포함 설명 문구',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_coordis_season_style (season, style),
@@ -36,11 +38,10 @@ CREATE TABLE Coordis (
 CREATE TABLE Fitting_Results (
     fitting_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    item_id BIGINT NOT NULL COMMENT '어떤 아이템을 피팅했는지',
+    status ENUM('PROCESSING', 'COMPLETED', 'FAILED') DEFAULT 'PROCESSING' COMMENT '피팅 작업 상태',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_fitting_results_user_item (user_id, item_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES Items(item_id) ON DELETE CASCADE
+    INDEX idx_fitting_results_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 ) COMMENT '가상 피팅 실행 이력';
 
 /* 5-1. 사용자 이미지 */
@@ -91,7 +92,17 @@ CREATE TABLE Fitting_Result_Images (
 
 
 /* ----- 관계 테이블 ----- */
-/* 1. 코디와 아이템의 N:M 관계 테이블 */
+/* 1. 가상 피팅 결과와 아이템의 N:M 관계 테이블 */
+CREATE TABLE Fitting_Result_Items (
+    fitting_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    PRIMARY KEY (fitting_id, item_id),
+    INDEX idx_fitting_result_items_item (item_id),
+    FOREIGN KEY (fitting_id) REFERENCES Fitting_Results(fitting_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES Items(item_id) ON DELETE CASCADE
+) COMMENT '가상 피팅 결과와 관련 아이템 매핑';
+
+/* 2. 코디와 아이템의 N:M 관계 테이블 */
 CREATE TABLE Coordi_Items (
     coordi_id BIGINT NOT NULL,
     item_id BIGINT NOT NULL,
@@ -101,7 +112,7 @@ CREATE TABLE Coordi_Items (
     FOREIGN KEY (item_id) REFERENCES Items(item_id) ON DELETE CASCADE
 ) COMMENT '하나의 코디를 구성하는 아이템들';
 
-/* 2. 사용자의 코디 스와이프 이력 */
+/* 3. 사용자의 코디 스와이프 이력 */
 CREATE TABLE User_Coordi_Interactions (
     user_id BIGINT NOT NULL,
     coordi_id BIGINT NOT NULL,
@@ -113,7 +124,7 @@ CREATE TABLE User_Coordi_Interactions (
     FOREIGN KEY (coordi_id) REFERENCES Coordis(coordi_id) ON DELETE CASCADE
 );
 
-/* 3. 사용자의 코디 상세 조회 이력 (머무른 시간) */
+/* 4. 사용자의 코디 상세 조회 이력 (머무른 시간) */
 CREATE TABLE User_Coordi_View_Logs (
     log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -127,7 +138,7 @@ CREATE TABLE User_Coordi_View_Logs (
     INDEX idx_coordi_view_logs_coordi_time (coordi_id, view_started_at)
 ) COMMENT '사용자가 특정 코디를 얼마나 오래 봤는지 기록 (추천용)';
 
-/* 4. 사용자가 '옷장 추가' 누른 아이템 (내 옷장) */
+/* 5. 사용자가 '옷장 추가' 누른 아이템 (내 옷장) */
 CREATE TABLE User_Closet_Items (
     user_id BIGINT NOT NULL,
     item_id BIGINT NOT NULL,
@@ -139,7 +150,7 @@ CREATE TABLE User_Closet_Items (
 ) COMMENT '사용자의 가상 옷장';
 
 
-/* 5. 사용자의 아이템 상세 조회 이력 (머무른 시간) */
+/* 6. 사용자의 아이템 상세 조회 이력 (머무른 시간) */
 CREATE TABLE User_Item_View_Logs (
     log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,

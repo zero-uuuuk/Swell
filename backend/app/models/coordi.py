@@ -21,7 +21,11 @@ class Coordi(Base):
         Enum("SPRING", "SUMMER", "FALL", "WINTER", name="coordi_season_enum")
     )
     style = Column(
-        Enum("CASUAL", "STREET", "FORMAL", "MINIMAL", name="coordi_style_enum")
+        Enum("CASUAL", "STREET", "SPORTY", "MINIMAL", name="coordi_style_enum")
+    )
+    gender = Column(
+        Enum("MALE", "FEMALE", name="coordi_gender_enum"),
+        comment="코디 대상 성별",
     )
     description = Column(Text, comment="태그 포함 설명 문구")
     created_at = Column(DateTime, server_default=func.now())
