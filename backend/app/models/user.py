@@ -4,7 +4,7 @@
 `Users` 테이블과 1:N 관계를 맺는 종속 엔티티와의 연동을 담당한다.
 """
 
-from sqlalchemy import BigInteger, Column, DateTime, String, Text
+from sqlalchemy import BigInteger, Column, DateTime, Enum, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -20,6 +20,10 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
     name = Column(String(100))
+    gender = Column(
+        Enum("MALE", "FEMALE", name="user_gender_enum"),
+        comment="사용자 성별",
+    )
     preferred_tags = Column(Text, comment="사용자 선호 태그 (콤마 구분 텍스트)")
     created_at = Column(DateTime, server_default=func.now())
 

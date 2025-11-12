@@ -23,7 +23,7 @@ engine = create_engine(
 # SessionLocal 생성(Application에서 공유할 DB session 생성)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base 클래스 생성ㅇ
+# Base 클래스 생성
 Base = declarative_base()
 
 # Transaction을 위한 DB session 제공 함수

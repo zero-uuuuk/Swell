@@ -27,7 +27,7 @@ class Item(Base):
     item_id = Column(BigInteger, primary_key=True, autoincrement=True)
     item_name = Column(String(255), nullable=False)
     item_type = Column(
-        Enum("상의", "하의", "신발", "가방", "모자", name="item_type_enum"),
+        Enum("상의", "하의", "아우터", name="item_type_enum"),
         nullable=False,
     )
     brand_name_ko = Column(String(100))
@@ -43,6 +43,12 @@ class Item(Base):
     # 종속 엔티티들과의 관계
     fitting_results = relationship(
         "FittingResult",
+        secondary="Fitting_Result_Items",
+        back_populates="items",
+        passive_deletes=True,
+    )
+    fitting_result_items = relationship(
+        "FittingResultItem",
         back_populates="item",
         cascade="all, delete-orphan",
         passive_deletes=True,

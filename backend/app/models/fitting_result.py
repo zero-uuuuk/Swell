@@ -4,7 +4,14 @@
 사용자와 아이템의 조합으로 생성된 가상 피팅 수행 내역을 기록한다.
 """
 
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Index
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -22,24 +29,36 @@ class FittingResult(Base):
         ForeignKey("Users.user_id", ondelete="CASCADE"),
         nullable=False,
     )
-    item_id = Column(
-        BigInteger,
-        ForeignKey("Items.item_id", ondelete="CASCADE"),
+    status = Column(
+        Enum(
+            "PROCESSING",
+            "COMPLETED",
+            "FAILED",
+            name="fitting_result_status_enum",
+        ),
         nullable=False,
-        comment="어떤 아이템을 피팅했는지",
+        server_default="PROCESSING",
+        comment="피팅 작업 상태",
     )
     created_at = Column(DateTime, server_default=func.now())
 
-    __table_args__ = (Index("idx_fitting_results_user_item", "user_id", "item_id"),)
+    __table_args__ = (Index("idx_fitting_results_user", "user_id"),)
 
     user = relationship(
         "User",
         back_populates="fitting_results",
         passive_deletes=True,
     )
-    item = relationship(
+    items = relationship(
         "Item",
+        secondary="Fitting_Result_Items",
         back_populates="fitting_results",
+        passive_deletes=True,
+    )
+    fitting_result_items = relationship(
+        "FittingResultItem",
+        back_populates="fitting_result",
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
     images = relationship(
@@ -50,5 +69,5 @@ class FittingResult(Base):
     )
 
     def __repr__(self) -> str:
-        return f"FittingResult(fitting_id={self.fitting_id}, user_id={self.user_id}, item_id={self.item_id})"
+        return f"FittingResult(fitting_id={self.fitting_id}, user_id={self.user_id})"
 
