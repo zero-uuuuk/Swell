@@ -90,3 +90,14 @@ def decode_access_token(token: str) -> Dict[str, Any]:
     return payload
 
 
+def extract_bearer_token(authorization_header: str) -> str:
+    """
+    Authorization 헤더에서 Bearer 토큰을 추출한다.
+    """
+
+    scheme, _, token = authorization_header.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise UnauthorizedError(message="유효한 Authorization 헤더가 필요합니다.")
+    return token
+
+

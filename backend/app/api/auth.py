@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Header, status
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import UnauthorizedError
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token, extract_bearer_token
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user_request import UserCreateRequest, UserLoginRequest
@@ -24,16 +24,19 @@ from app.schemas.user_response import (
 )
 from app.services.auth_service import authenticate_user, get_user_from_token, register_user
 
+# 인증 관련 라우터(접두사: /auth)
+router = APIRouter(prefix="/auth", tags=["Authentication"]) # tags: 문서화 시 그룹화 용도
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
+# 사용자 페이로드(응답 데이터) 생성 헬퍼 함수
 def _build_user_payload(user) -> UserPayload:
     """사용자 페이로드 생성 헬퍼 함수"""
+
+    # 프로필 이미지 URL 추출
     profile_image_url = (
         user.images[0].image_url if getattr(user, "images", []) else None
     )
 
+    # 사용자 페이로드 생성
     return UserPayload.model_validate(
         {
             "id": user.user_id,
@@ -46,12 +49,16 @@ def _build_user_payload(user) -> UserPayload:
         from_attributes=False,
     )
 
+# 신규 사용자 회원가입 API
 @router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED,
     response_model=SignupResponse,
 )
-def signup(payload: UserCreateRequest, db: Session = Depends(get_db)) -> SignupResponse:
+def signup(
+    payload: UserCreateRequest, # 사용자 생성 요청 페이로드
+    db: Session = Depends(get_db), # 데이터베이스 세션
+) -> SignupResponse:
     """신규 사용자 회원가입 엔드포인트."""
 
     # 사용자 등록
@@ -68,12 +75,16 @@ def signup(payload: UserCreateRequest, db: Session = Depends(get_db)) -> SignupR
     )
 
 
+# 기존 사용자 로그인 API
 @router.post(
     "/login",
     status_code=status.HTTP_200_OK,
     response_model=LoginResponse,
 )
-def login(payload: UserLoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
+def login(
+    payload: UserLoginRequest, 
+    db: Session = Depends(get_db)
+) -> LoginResponse:
     """기존 사용자 로그인 엔드포인트."""
 
     # 사용자 인증
@@ -90,7 +101,7 @@ def login(payload: UserLoginRequest, db: Session = Depends(get_db)) -> LoginResp
         )
     )
 
-
+# 기존 사용자 로그아웃 API
 @router.post(
     "/logout",
     status_code=status.HTTP_200_OK,
@@ -100,9 +111,7 @@ def logout(authorization: str = Header(...)) -> LogoutResponse:
     """로그아웃 엔드포인트."""
 
     # 헤더에서 토큰 추출
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise UnauthorizedError(message="유효한 Authorization 헤더가 필요합니다.")
+    token = extract_bearer_token(authorization)
 
     # 토큰 검증
     decode_access_token(token)
@@ -113,22 +122,20 @@ def logout(authorization: str = Header(...)) -> LogoutResponse:
         message="로그아웃되었습니다",
     )
 
-
+# 현재 로그인한 사용자 정보 조회 API
 @router.get(
     "/me",
     status_code=status.HTTP_200_OK,
     response_model=MeResponse,
 )
 def read_current_user(
-    authorization: str = Header(...),
+    authorization: str = Header(...), # 인증 헤더
     db: Session = Depends(get_db),
 ) -> MeResponse:
     """현재 로그인한 사용자 정보 조회 엔드포인트."""
 
     # 헤더에서 토큰 추출
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise UnauthorizedError(message="유효한 Authorization 헤더가 필요합니다.")
+    token = extract_bearer_token(authorization)
 
     # 서비스 계층에서 사용자 조회
     user = get_user_from_token(db, token)

@@ -53,7 +53,6 @@ class LogoutResponse(BaseModel):
     success: bool = True
     message: str = "로그아웃되었습니다"
 
-
 # 내 정보 조회 응답 데이터 스키마 1
 class MeResponseData(BaseModel):
     user: UserPayload
