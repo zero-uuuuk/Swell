@@ -37,3 +37,11 @@ class UserPreferencesRequest(BaseModel):
     class Config:
         populate_by_name = True
 
+
+# 본 코디 스킵 기록 요청 스키마
+class SkipOutfitsRequest(BaseModel):
+    outfit_ids: List[int] = Field(alias="outfitIds", min_length=1, description="스킵할 코디 ID 리스트")
+
+    class Config:
+        populate_by_name = True
+

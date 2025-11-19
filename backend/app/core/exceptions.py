@@ -239,6 +239,22 @@ def register_exception_handlers(app: FastAPI) -> None:
             if field_name == "limit" and error_type in ("greater_than_equal", "less_than_equal", "int_parsing"):
                 message = "페이지당 개수는 1 이상 50 이하여야 합니다"
                 break
+            # season 값 검증
+            if field_name == "season" and error_type in ("literal_error", "type_error"):
+                message = "유효하지 않은 season 값입니다. (all, spring, summer, fall, winter 중 하나를 선택해주세요)"
+                break
+            # style 값 검증
+            if field_name == "style" and error_type in ("literal_error", "type_error"):
+                message = "유효하지 않은 style 값입니다. (all, casual, street, sporty, minimal 중 하나를 선택해주세요)"
+                break
+            # gender 값 검증
+            if field_name == "gender" and error_type in ("literal_error", "type_error"):
+                message = "유효하지 않은 gender 값입니다. (all, male, female 중 하나를 선택해주세요)"
+                break
+            # outfitIds 빈 배열 검증
+            if field_name in ("outfitIds", "outfit_ids") and error_type in ("list_too_short", "value_error"):
+                message = "outfitIds는 최소 1개 이상이어야 합니다"
+                break
 
         # ValidationError 형식으로 직접 응답 반환
         return JSONResponse(
