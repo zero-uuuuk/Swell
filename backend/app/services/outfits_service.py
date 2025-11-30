@@ -283,81 +283,6 @@ async def get_outfits_list(
     return outfits, pagination
 
 
-def skip_outfits(
-    db: Session,
-    user_id: int,
-    coordi_ids: list[int],
-) -> tuple[int, int]:
-    """
-    사용자가 본 코디들을 스킵으로 기록합니다.
-    
-    Parameters
-    ----------
-    db:
-        데이터베이스 세션
-    user_id:
-        사용자 ID
-    coordi_ids:
-        스킵할 코디 ID 리스트
-        
-    Returns
-    -------
-    tuple[int, int]:
-        (recorded_count, skipped_count)
-        - recorded_count: 새로 기록된 코디 개수
-        - skipped_count: 이미 기록된 코디 개수 (like 또는 skip)
-    """
-    if not coordi_ids:
-        return 0, 0
-    
-    # 1. 이미 like로 기록된 코디 조회 (제외 대상)
-    existing_likes = db.execute(
-        select(UserCoordiInteraction)
-        .where(
-            UserCoordiInteraction.user_id == user_id,
-            UserCoordiInteraction.coordi_id.in_(coordi_ids),
-            UserCoordiInteraction.action_type == "like",
-        )
-    ).scalars().all()
-    liked_coordi_ids = {interaction.coordi_id for interaction in existing_likes}
-    
-    # 2. 이미 skip으로 기록된 코디 조회 (중복 체크용)
-    existing_skips = db.execute(
-        select(UserCoordiInteraction)
-        .where(
-            UserCoordiInteraction.user_id == user_id,
-            UserCoordiInteraction.coordi_id.in_(coordi_ids),
-            UserCoordiInteraction.action_type == "skip",
-        )
-    ).scalars().all()
-    skipped_coordi_ids = {interaction.coordi_id for interaction in existing_skips}
-    
-    # 3. 새로운 skip 기록 생성 (like도 skip도 아닌 코디만)
-    new_skip_coordi_ids = [
-        coordi_id
-        for coordi_id in coordi_ids
-        if coordi_id not in liked_coordi_ids and coordi_id not in skipped_coordi_ids
-    ]
-    
-    if new_skip_coordi_ids:
-        new_interactions = [
-            UserCoordiInteraction(
-                user_id=user_id,
-                coordi_id=coordi_id,
-                action_type="skip",
-            )
-            for coordi_id in new_skip_coordi_ids
-        ]
-        db.add_all(new_interactions)
-        db.commit()
-    
-    # 4. 카운트 계산
-    recorded_count = len(new_skip_coordi_ids)
-    skipped_count = len(liked_coordi_ids) + len(skipped_coordi_ids)
-    
-    return recorded_count, skipped_count
-
-
 def add_favorite(
     db: Session,
     user_id: int,
@@ -432,6 +357,128 @@ def add_favorite(
     db.refresh(interaction)
     
     return interaction
+
+
+def skip_outfit(
+    db: Session,
+    user_id: int,
+    coordi_id: int,
+) -> UserCoordiInteraction:
+    """
+    코디를 스킵으로 기록합니다.
+    
+    Parameters
+    ----------
+    db:
+        데이터베이스 세션
+    user_id:
+        사용자 ID
+    coordi_id:
+        코디 ID
+        
+    Returns
+    -------
+    UserCoordiInteraction:
+        스킵 상호작용 레코드 (기존 또는 새로 생성된 레코드)
+        
+    Raises
+    ------
+    OutfitNotFoundError:
+        코디가 존재하지 않는 경우
+    """
+    # 1. 코디 존재 여부 확인
+    coordi = db.get(Coordi, coordi_id)
+    if coordi is None:
+        raise OutfitNotFoundError()
+    
+    # 2. 이미 좋아요한 코디인지 확인
+    existing_like = db.execute(
+        select(UserCoordiInteraction)
+        .where(
+            UserCoordiInteraction.user_id == user_id,
+            UserCoordiInteraction.coordi_id == coordi_id,
+            UserCoordiInteraction.action_type == "like",
+        )
+    ).scalar_one_or_none()
+    
+    if existing_like is not None:
+        # 좋아요가 있는 경우: 기존 레코드 반환 (예외 없이 pass, 200 OK)
+        return existing_like
+    
+    # 3. 이미 스킵된 코디인지 확인
+    existing_skip = db.execute(
+        select(UserCoordiInteraction)
+        .where(
+            UserCoordiInteraction.user_id == user_id,
+            UserCoordiInteraction.coordi_id == coordi_id,
+            UserCoordiInteraction.action_type == "skip",
+        )
+    ).scalar_one_or_none()
+    
+    if existing_skip is not None:
+        # 스킵된 경우: 기존 레코드 반환 (idempotent, interacted_at 업데이트 안 함)
+        return existing_skip
+    
+    # 4. 새로운 스킵 기록 생성
+    interaction = UserCoordiInteraction(
+        user_id=user_id,
+        coordi_id=coordi_id,
+        action_type="skip",
+    )
+    db.add(interaction)
+    db.commit()
+    db.refresh(interaction)
+    
+    return interaction
+
+
+def record_view_log(
+    db: Session,
+    user_id: int,
+    coordi_id: int,
+    duration_seconds: int,
+) -> datetime:
+    """
+    코디 조회 로그를 기록합니다.
+    
+    Parameters
+    ----------
+    db:
+        데이터베이스 세션
+    user_id:
+        사용자 ID
+    coordi_id:
+        코디 ID
+    duration_seconds:
+        조회 시간 (초)
+        
+    Returns
+    -------
+    datetime:
+        기록 일시 (UTC)
+        
+    Raises
+    ------
+    OutfitNotFoundError:
+        코디가 존재하지 않는 경우
+    """
+    # 1. 코디 존재 여부 확인
+    coordi = db.get(Coordi, coordi_id)
+    if coordi is None:
+        raise OutfitNotFoundError()
+    
+    # 2. 조회 로그 레코드 생성
+    view_log = UserCoordiViewLog(
+        user_id=user_id,
+        coordi_id=coordi_id,
+        duration_seconds=duration_seconds,
+    )
+    db.add(view_log)
+    db.commit()
+    db.refresh(view_log)
+    
+    # 3. 기록 일시 반환 (view_started_at 사용)
+    return view_log.view_started_at
 
 
 def remove_favorite(

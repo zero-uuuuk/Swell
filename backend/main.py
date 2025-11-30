@@ -24,7 +24,6 @@ register_exception_handlers(app)
 # API 라우터 등록
 app.include_router(api_router, prefix="/api")
 
-
 # 시작 시 데이터베이스 초기화
 @app.on_event("startup")
 async def startup_event():

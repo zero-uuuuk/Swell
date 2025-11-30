@@ -5,11 +5,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.schemas.auth import UserGender
+
+class UserGender(str, Enum):
+    male = "male"
+    female = "female"
 
 
 class PreferredTagPayload(BaseModel):

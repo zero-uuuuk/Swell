@@ -5,33 +5,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
 
 from pydantic import BaseModel, Field
-
-
-# 본 코디 스킵 기록 요청 스키마
-class SkipOutfitsRequest(BaseModel):
-    outfit_ids: List[int] = Field(alias="outfitIds", min_length=1, description="스킵할 코디 ID 리스트")
-
-    class Config:
-        populate_by_name = True
-
-
-# 본 코디 스킵 기록 응답 데이터 스키마 1
-class SkipOutfitsResponseData(BaseModel):
-    message: str
-    recorded_count: int = Field(alias="recordedCount")
-    skipped_count: int = Field(alias="skippedCount")
-
-    class Config:
-        populate_by_name = True
-
-
-# 본 코디 스킵 기록 응답 데이터 스키마 2
-class SkipOutfitsResponse(BaseModel):
-    success: bool = True
-    data: SkipOutfitsResponseData
 
 
 # 코디 좋아요 추가 응답 데이터 스키마 1
@@ -64,4 +39,43 @@ class RemoveFavoriteResponseData(BaseModel):
 class RemoveFavoriteResponse(BaseModel):
     success: bool = True
     data: RemoveFavoriteResponseData
+
+
+# 코디 스킵 기록 응답 데이터 스키마 1
+class SkipOutfitResponseData(BaseModel):
+    outfit_id: int = Field(alias="outfitId")
+    is_skipped: bool = Field(alias="isSkipped", default=True)
+    skipped_at: datetime = Field(alias="skippedAt")
+
+    class Config:
+        populate_by_name = True
+
+
+# 코디 스킵 기록 응답 데이터 스키마 2
+class SkipOutfitResponse(BaseModel):
+    success: bool = True
+    data: SkipOutfitResponseData
+
+
+# 코디 조회 로그 기록 요청 스키마
+class RecordViewLogRequest(BaseModel):
+    duration_seconds: int = Field(alias="durationSeconds", ge=0, description="조회 시간 (초)")
+
+    class Config:
+        populate_by_name = True
+
+
+# 코디 조회 로그 기록 응답 데이터 스키마 1
+class RecordViewLogResponseData(BaseModel):
+    message: str
+    recorded_at: datetime = Field(alias="recordedAt")
+
+    class Config:
+        populate_by_name = True
+
+
+# 코디 조회 로그 기록 응답 데이터 스키마 2
+class RecordViewLogResponse(BaseModel):
+    success: bool = True
+    data: RecordViewLogResponseData
 

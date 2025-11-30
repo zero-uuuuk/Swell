@@ -18,19 +18,22 @@ from app.schemas.recommendation_response import (
 from app.schemas.outfits import (
     AddFavoriteResponse,
     AddFavoriteResponseData,
+    RecordViewLogRequest,
+    RecordViewLogResponse,
+    RecordViewLogResponseData,
     RemoveFavoriteResponse,
     RemoveFavoriteResponseData,
-    SkipOutfitsRequest,
-    SkipOutfitsResponse,
-    SkipOutfitsResponseData,
+    SkipOutfitResponse,
+    SkipOutfitResponseData,
 )
 from app.services.auth_service import get_user_from_token
 from app.services.outfits_service import (
     add_favorite,
     get_favorite_outfits,
     get_outfits_list,
+    record_view_log,
     remove_favorite,
-    skip_outfits,
+    skip_outfit,
 )
 
 # 코디 목록 조회 관련 라우터(접두사: /outfits)
@@ -93,20 +96,20 @@ async def get_outfits(
 
 
 @router.post(
-    "/skip",
+    "/{outfit_id}/skip",
     status_code=status.HTTP_200_OK,
-    response_model=SkipOutfitsResponse,
+    response_model=SkipOutfitResponse,
 )
-async def skip_outfits_endpoint(
-    request: SkipOutfitsRequest,
+async def skip_outfit_endpoint(
+    outfit_id: int,
     authorization: str = Header(...),
     db: Session = Depends(get_db),
-) -> SkipOutfitsResponse:
+) -> SkipOutfitResponse:
     """
-    사용자가 본 코디들을 스킵으로 기록합니다.
+    코디를 스킵으로 기록합니다.
     
-    이미 좋아요로 기록된 코디는 스킵으로 변경되지 않습니다.
-    이후 추천 API 호출 시 자동으로 제외됩니다.
+    이미 좋아요한 코디는 스킵으로 변경되지 않으며, 예외 없이 기존 레코드를 반환합니다.
+    이미 스킵된 코디는 idempotent하게 처리되어 기존 레코드를 반환합니다.
     """
     # 헤더에서 토큰 추출
     token = extract_bearer_token(authorization)
@@ -115,21 +118,57 @@ async def skip_outfits_endpoint(
     user = get_user_from_token(db, token)
     
     # 스킵 기록
-    recorded_count, skipped_count = skip_outfits(
+    interaction = skip_outfit(
         db=db,
         user_id=user.user_id,
-        coordi_ids=request.outfit_ids,
+        coordi_id=outfit_id,
     )
     
-    # 응답 메시지 생성
-    message = f"{recorded_count}개의 코디가 스킵으로 기록되었습니다"
+    # 응답 반환
+    return SkipOutfitResponse(
+        data=SkipOutfitResponseData(
+            outfitId=interaction.coordi_id,
+            isSkipped=True,
+            skippedAt=interaction.interacted_at,
+        )
+    )
+
+
+@router.post(
+    "/{outfit_id}/view",
+    status_code=status.HTTP_200_OK,
+    response_model=RecordViewLogResponse,
+)
+async def record_view_log_endpoint(
+    outfit_id: int,
+    request: RecordViewLogRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+) -> RecordViewLogResponse:
+    """
+    코디 조회 로그를 기록합니다.
+    
+    같은 코디를 여러 번 볼 수 있으며, 각 조회 세션마다 새로운 레코드가 생성됩니다.
+    """
+    # 헤더에서 토큰 추출
+    token = extract_bearer_token(authorization)
+    
+    # 토큰 검증 및 사용자 조회
+    user = get_user_from_token(db, token)
+    
+    # 조회 로그 기록
+    recorded_at = record_view_log(
+        db=db,
+        user_id=user.user_id,
+        coordi_id=outfit_id,
+        duration_seconds=request.duration_seconds,
+    )
     
     # 응답 반환
-    return SkipOutfitsResponse(
-        data=SkipOutfitsResponseData(
-            message=message,
-            recordedCount=recorded_count,
-            skippedCount=skipped_count,
+    return RecordViewLogResponse(
+        data=RecordViewLogResponseData(
+            message="조회 로그가 기록되었습니다",
+            recordedAt=recorded_at,
         )
     )
 

@@ -4,18 +4,9 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import TYPE_CHECKING
-
 from pydantic import BaseModel, EmailStr, Field
 
-if TYPE_CHECKING:
-    from app.schemas.users import UserPayload
-
-
-class UserGender(str, Enum):
-    male = "male"
-    female = "female"
+from app.schemas.users import UserGender, UserPayload  # 직접 import
 
 
 # 사용자 회원가입 요청 스키마
@@ -34,7 +25,7 @@ class UserLoginRequest(BaseModel):
 
 # 회원가입 응답 데이터 스키마 1
 class SignupResponseData(BaseModel):
-    user: "UserPayload"
+    user: UserPayload  # forward reference 제거
 
 
 # 회원가입 응답 데이터 스키마 2
@@ -45,7 +36,7 @@ class SignupResponse(BaseModel):
 
 # 로그인 응답 데이터 스키마 1
 class LoginResponseData(BaseModel):
-    user: "UserPayload"
+    user: UserPayload  # forward reference 제거
     token: str
 
 

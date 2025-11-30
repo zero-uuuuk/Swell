@@ -35,7 +35,8 @@ HCI Fashion API
 │   ├── 4.2 코디 좋아요 추가
 │   ├── 4.3 코디 좋아요 취소
 │   ├── 4.4 좋아요한 코디 목록 조회
-│   └── 4.5 본 코디 스킵 기록
+│   ├── 4.5 본 코디 스킵 기록
+│   └── 4.6 코디 조회 로그 기록
 ├── 5. 옷장 (Closet)
 │   ├── 5.1 옷장에 아이템 저장
 │   ├── 5.2 옷장 아이템 목록 조회
@@ -43,7 +44,8 @@ HCI Fashion API
 └── 6. 가상 피팅 (Virtual Fitting)
     ├── 6.1 가상 피팅 시작
     ├── 6.2 가상 피팅 상태 조회
-    └── 6.3 가상 피팅 이력 조회
+    ├── 6.3 가상 피팅 이력 조회
+    └── 6.4 가상 피팅 이력 삭제
 ```
 
 ---
@@ -1428,27 +1430,24 @@ HCI Fashion API
 
 **Request:**
 - **Method:** `POST`
-- **URL:** `{{api_base}}/outfits/skip`
+- **URL:** `{{api_base}}/outfits/{outfitId}/skip`
 - **Headers:**
   ```
   Authorization: Bearer {{token}}
-  Content-Type: application/json
   ```
-- **Body (raw JSON):**
-  ```json
-  {
-    "outfitIds": [1438903904945349989, 1438908516166171660, 1438907945581406350]
-  }
-  ```
+- **Path Parameters:**
+  - `outfitId` (required): 코디 고유 ID
+  - ex: 1438903904945349989
+- **Body**: 없음
 
 **Expected Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "message": "3개의 코디가 스킵으로 기록되었습니다",
-    "recordedCount": 3,
-    "skippedCount": 0
+    "outfitId": 1438903904945349989,
+    "isSkipped": true,
+    "skippedAt": "2025-11-16T10:00:00Z"
   }
 }
 ```
@@ -1457,57 +1456,154 @@ HCI Fashion API
 
 1. **성공 케이스 - 새로운 코디 스킵**
    - 유효한 토큰으로 요청
-   - outfitIds: [123456789, 987654321, 111222333] (3개)
-   - Expected: 200 OK, recordedCount=3, skippedCount=0
+   - outfitId: 존재하는 코디 ID
+   - Expected: 200 OK, outfitId, isSkipped=true, skippedAt 반환
    - `UserCoordiInteraction` 테이블에 `action_type="skip"`으로 기록됨
 
-2. **성공 케이스 - 일부 중복 (이미 skip으로 기록된 코디 포함)**
+2. **성공 케이스 - 이미 스킵된 코디 (Idempotent)**
    - 유효한 토큰으로 요청
-   - outfitIds: [123456789, 987654321, 111222333]
-   - 123456789는 이미 skip으로 기록됨
-   - Expected: 200 OK, recordedCount=2, skippedCount=1
-   - 중복된 코디는 skippedCount에 포함됨
+   - outfitId: 이미 `action_type="skip"`으로 기록된 코디 ID
+   - Expected: 200 OK, 기존 레코드 반환 (interacted_at 업데이트 안 됨)
+   - idempotent하게 처리됨
 
-3. **성공 케이스 - 좋아요가 있는 코디 포함**
+3. **성공 케이스 - 좋아요가 있는 코디 (Pass)**
    - 유효한 토큰으로 요청
-   - outfitIds: [123456789, 987654321, 111222333]
-   - 123456789는 이미 `action_type="like"`로 기록됨
-   - Expected: 200 OK, recordedCount=2, skippedCount=1
+   - outfitId: 이미 `action_type="like"`로 기록된 코디 ID
+   - Expected: 200 OK, 기존 like 레코드 반환 (예외 없이 pass)
    - 좋아요가 있는 코디는 skip으로 변경되지 않음 (좋아요 우선)
 
-4. **성공 케이스 - 좋아요와 중복 모두 포함**
+4. **코디 없음 (404 Not Found)**
+   - outfitId: 존재하지 않는 코디 ID (예: 999999999999)
+   - Expected:
+     ```json
+     {
+       "success": false,
+       "error": {
+         "code": "OUTFIT_NOT_FOUND",
+         "message": "코디를 찾을 수 없습니다"
+       }
+     }
+     ```
+---
+
+### 4.6 코디 조회 로그 기록
+
+**Request:**
+- **Method:** `POST`
+- **URL:** `{{api_base}}/outfits/{outfitId}/view`
+- **Headers:**
+  ```
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  ```
+- **Path Parameters:**
+  - `outfitId` (required): 코디 고유 ID
+  - ex: 1438903904945349989
+- **Body (raw JSON):**
+  ```json
+  {
+    "durationSeconds": 5
+  }
+  ```
+
+**Expected Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "조회 로그가 기록되었습니다",
+    "recordedAt": "2025-11-16T10:00:00Z"
+  }
+}
+```
+
+**Test Cases:**
+
+1. **성공 케이스 - 새로운 코디 조회 로그 기록**
    - 유효한 토큰으로 요청
-   - outfitIds: [123456789, 987654321, 111222333, 444555666]
-   - 123456789: 이미 like로 기록됨
-   - 987654321: 이미 skip으로 기록됨
-   - Expected: 200 OK, recordedCount=2, skippedCount=2
-   - like와 skip 모두 skippedCount에 포함됨
+   - outfitId: 존재하는 코디 ID
+   - durationSeconds: 5
+   - Expected: 200 OK, message와 recordedAt 반환
+   - `UserCoordiViewLog` 테이블에 레코드 생성됨
+   - `view_started_at`은 서버에서 자동 설정됨
 
-5. **빈 배열 오류 (400 Bad Request)**
-   - outfitIds: []
+2. **성공 케이스 - 같은 코디를 여러 번 조회**
+   - 유효한 토큰으로 요청
+   - 같은 outfitId로 여러 번 요청 (각각 다른 durationSeconds)
+   - Expected: 200 OK, 각 요청마다 새로운 레코드 생성됨
+   - 각 조회 세션마다 별도의 레코드가 생성됨
+
+3. **성공 케이스 - durationSeconds가 0인 경우**
+   - 유효한 토큰으로 요청
+   - outfitId: 존재하는 코디 ID
+   - durationSeconds: 0 (즉시 넘어간 경우)
+   - Expected: 200 OK, 정상적으로 기록됨
+   - 0초도 유효한 조회로 처리됨
+
+4. **성공 케이스 - 긴 조회 시간**
+   - 유효한 토큰으로 요청
+   - outfitId: 존재하는 코디 ID
+   - durationSeconds: 300 (5분)
+   - Expected: 200 OK, 정상적으로 기록됨
+
+5. **코디 없음 (404 Not Found)**
+   - outfitId: 존재하지 않는 코디 ID (예: 999999999999)
+   - durationSeconds: 5
+   - Expected:
+     ```json
+     {
+       "success": false,
+       "error": {
+         "code": "OUTFIT_NOT_FOUND",
+         "message": "코디를 찾을 수 없습니다"
+       }
+     }
+     ```
+
+6. **durationSeconds 필드 누락 (400 Bad Request)**
+   - Body에서 `durationSeconds` 필드 제거
    - Expected:
      ```json
      {
        "success": false,
        "error": {
          "code": "VALIDATION_ERROR",
-         "message": "outfitIds는 최소 1개 이상이어야 합니다"
+         "message": "조회 시간을 입력해주세요"
        }
      }
      ```
 
-6. **outfitIds 필드 누락 (400 Bad Request)**
-   - Body에서 `outfitIds` 필드 제거
+7. **durationSeconds 형식 오류 - 문자열 (400 Bad Request)**
+   - durationSeconds: "abc" (문자열)
    - Expected:
      ```json
      {
        "success": false,
        "error": {
          "code": "VALIDATION_ERROR",
-         "message": "outfitIds는 최소 1개 이상이어야 합니다"
+         "message": "유효하지 않은 조회 시간 형식입니다"
        }
      }
      ```
+
+8. **durationSeconds 음수 값 (400 Bad Request)**
+   - durationSeconds: -1
+   - Expected:
+     ```json
+     {
+       "success": false,
+       "error": {
+         "code": "VALIDATION_ERROR",
+         "message": "durationSeconds는 0 이상이어야 합니다"
+       }
+     }
+     ```
+
+9. **누적 조회 시간 확인**
+   - 같은 코디를 여러 번 조회 (예: 5초, 10초, 3초)
+   - `UserCoordiViewLog` 테이블에서 `SUM(duration_seconds)`로 확인
+   - Expected: 총 18초로 계산됨
+
 ---
 
 ## 5. 옷장 (Closet)
@@ -2278,8 +2374,4 @@ HCI Fashion API
      ```
 
 ---
-
-## 다음 엔드포인트 추가 예정
-
-- ... (계속 추가)
 
