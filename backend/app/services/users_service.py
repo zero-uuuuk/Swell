@@ -48,21 +48,41 @@ logger = logging.getLogger(__name__)
 
 def get_preferences_options_data(
     db: Session,
+    gender: str | None = None,
 ) -> tuple[list[HashtagOptionPayload], list[SampleOutfitOptionPayload]]:
     """
     사용자 선호도 설정 옵션 데이터를 조회한다.
     
     Args:
         db: 데이터베이스 세션
+        gender: 사용자 성별 ("male" 또는 "female"). None이면 모든 태그 반환
         
     Returns:
         (hashtags, sample_outfits) 튜플
     """
-    # 모든 태그 조회 (ID 순으로 정렬)
-    # TODO: 특정 조건이 주어질 경우, 교체
-    tags = db.execute(
-        select(Tag).order_by(Tag.tag_id)
-    ).scalars().all()
+    # TODO: 하드코딩한 값이니, 변경이 생길 경우 반드시 교체
+    # 성별에 따른 태그 ID 필터링
+    if gender == "female":
+        # 여자: tag_id 1-18
+        allowed_tag_ids = set(range(1, 19))
+    elif gender == "male":
+        # 남자: tag_id 19-25, 그리고 2, 3, 4, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18
+        allowed_tag_ids = {2, 3, 4, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}
+    else:
+        # 성별이 없으면 모든 태그 반환
+        allowed_tag_ids = None
+    
+    # 태그 조회 (성별에 따라 필터링, ID 순으로 정렬)
+    if allowed_tag_ids is not None:
+        tags = db.execute(
+            select(Tag)
+            .where(Tag.tag_id.in_(allowed_tag_ids))
+            .order_by(Tag.tag_id)
+        ).scalars().all()
+    else:
+        tags = db.execute(
+            select(Tag).order_by(Tag.tag_id)
+        ).scalars().all()
 
     # 해시태그 옵션 페이로드 생성
     hashtags = [
@@ -70,11 +90,55 @@ def get_preferences_options_data(
         for tag in tags
     ]
 
-    # 예시 코디 조회 (최대 20개, ID 순으로 정렬)
-    # TODO: 특정 조건이 주어질 경우, 교체
-    coordis = db.execute(
-        select(Coordi).order_by(Coordi.coordi_id).limit(20)
-    ).scalars().all()
+    # TODO: 하드코딩한 값이니, 변경이 생길 경우 반드시 교체
+    # 성별에 따른 예시 코디 ID 필터링
+    # 남자 코디 10개
+    male_coordi_ids = [
+        1438047372096127182,
+        1438050658717615145,
+        1440632826790372313,
+        1432261617683781306,
+        1441363312562352773,
+        1437685886030622206,
+        1438129953480057346,
+        1434470090269916402,
+        1434889077588442216,
+        1434903191551269505,
+    ]
+    # 여자 코디 10개
+    female_coordi_ids = [
+        1440978364617105571,
+        1438118635197050864,
+        1442495043165125647,
+        1440256083999133220,
+        1438892987386383965,
+        1438907255408718529,
+        1438476711227292678,
+        1438487289000337970,
+        1438477585693402900,
+        1440686744765890806,
+    ]
+    
+    # 성별에 따라 코디 ID 선택
+    if gender == "male":
+        allowed_coordi_ids = male_coordi_ids
+    elif gender == "female":
+        allowed_coordi_ids = female_coordi_ids
+    else:
+        # 성별이 없으면 모든 코디 반환 (기존 동작 유지)
+        allowed_coordi_ids = None
+    
+    # 예시 코디 조회 (성별에 따라 필터링, ID 순으로 정렬)
+    if allowed_coordi_ids is not None:
+        coordis = db.execute(
+            select(Coordi)
+            .where(Coordi.coordi_id.in_(allowed_coordi_ids))
+            .order_by(Coordi.coordi_id)
+        ).scalars().all()
+    else:
+        coordis = db.execute(
+            select(Coordi).order_by(Coordi.coordi_id).limit(20)
+        ).scalars().all()
 
     # 예시 코디 옵션 페이로드 생성
     sample_outfits = []
