@@ -22,4 +22,4 @@ ENV PORT=8080
 
 # uvicorn 실행
 # Cloud Run은 $PORT 환경변수를 주입하므로 그에 맞춰 실행
-CMD sh -c "uvicorn main:app --host 0.0.0.0 --port $PORT"
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
