@@ -77,25 +77,33 @@ function App() {
     }
   };
 
+  const [isCompleting, setIsCompleting] = useState(false);
+
   // 온보딩 완료 처리
   const handleOnboardingComplete = async () => {
-    onboarding.goToNextStep(); // Step 4로 이동
+    setIsCompleting(true); // 프로그레스 바 100% 애니메이션 시작
 
-    // Cold-Start 테스트: 온보딩 데이터를 추천 API에 전달
-    const onboardingData = onboarding.getOnboardingData();
-    recommendations.loadRecommendations({
-      gender: onboarding.gender, // "여성" 또는 "남성"
-      hashtagIds: onboardingData.hashtagIds || [],
-      sampleOutfitIds: onboardingData.sampleOutfitIds || [],
-    });
+    // 애니메이션을 위해 잠시 대기
+    setTimeout(async () => {
+      onboarding.goToNextStep(); // Step 4로 이동
+      setIsCompleting(false);
 
-    try {
-      // 온보딩 데이터 제출 (비동기로 실행, 추천과 병렬 처리)
-      await submitPreferences(onboardingData);
-    } catch (error) {
-      console.error('Failed to submit preferences:', error);
-      // 에러가 발생해도 추천은 계속 진행
-    }
+      // Cold-Start 테스트: 온보딩 데이터를 추천 API에 전달
+      const onboardingData = onboarding.getOnboardingData();
+      recommendations.loadRecommendations({
+        gender: onboarding.gender, // "여성" 또는 "남성"
+        hashtagIds: onboardingData.hashtagIds || [],
+        sampleOutfitIds: onboardingData.sampleOutfitIds || [],
+      });
+
+      try {
+        // 온보딩 데이터 제출 (비동기로 실행, 추천과 병렬 처리)
+        await submitPreferences(onboardingData);
+      } catch (error) {
+        console.error('Failed to submit preferences:', error);
+        // 에러가 발생해도 추천은 계속 진행
+      }
+    }, 600); // 600ms 대기 (애니메이션 시간 고려)
   };
 
   // 추천 좋아요 처리
@@ -123,7 +131,7 @@ function App() {
 
         {/* 상단 진행 바 */}
         {onboarding.step < 4 && (
-          <ProgressBar step={onboarding.step} totalSteps={3} />
+          <ProgressBar step={onboarding.step} totalSteps={3} isCompleting={isCompleting} />
         )}
 
         {/* 콘텐츠 영역 */}
