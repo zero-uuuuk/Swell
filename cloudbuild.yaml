@@ -1,0 +1,31 @@
+steps:
+  # 1. Docker Build
+  # backend 디렉토리에서 빌드를 수행합니다.
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'backend'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/swell-backend:$COMMIT_SHA', '.']
+
+  # 2. Docker Push
+  # 빌드된 이미지를 Container Registry에 푸시합니다.
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/swell-backend:$COMMIT_SHA']
+
+  # 3. Cloud Run Deploy
+  # Cloud Run에 배포합니다.
+  # 주의: 서비스 이름(swell-backend)과 리전(asia-northeast3)이 실제 설정과 맞는지 확인해주세요.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'swell-backend'  # Cloud Run 서비스 이름
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/swell-backend:$COMMIT_SHA'
+      - '--region'
+      - 'asia-northeast3' # 서울 리전 (필요시 변경)
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated' # 인증 없이 접근 허용 (필요시 제거)
+
+images:
+  - 'gcr.io/$PROJECT_ID/swell-backend:$COMMIT_SHA'
