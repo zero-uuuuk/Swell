@@ -48,14 +48,24 @@ export function Step0Introduction({ onNext }) {
             </div>
 
             {/* Footer Action */}
-            <div className="mt-8 flex justify-center stagger-item" style={{ animationDelay: '300ms' }}>
+            <div className="mt-8 flex flex-col items-center stagger-item" style={{ animationDelay: '300ms' }}>
                 <button
                     onClick={onNext}
-                    className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-slate-900 font-lg rounded-full hover:bg-slate-800 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
+                    className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-slate-900 font-lg rounded-full hover:bg-slate-800 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 mb-8"
                 >
                     <span>테스트 시작하기</span>
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
+
+                {/* Disclaimers */}
+                <div className="text-center space-y-1.5 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-[11px] md:text-xs text-slate-500 font-medium">
+                        * 본 서비스는 추천 알고리즘 성능 평가를 위한 연구 목적으로 제작되었으며, 수집된 데이터는 상업적으로 이용되지 않습니다.
+                    </p>
+                    <p className="text-[11px] md:text-xs text-slate-500 font-medium">
+                        * 본 서비스는 PC(Chrome 권장) 및 iPad 환경에 최적화되어 있습니다.
+                    </p>
+                </div>
             </div>
         </div>
     );

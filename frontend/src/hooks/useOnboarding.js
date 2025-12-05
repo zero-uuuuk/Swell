@@ -8,6 +8,9 @@ import { ONBOARDING_LIMITS } from '../constants/onboarding';
 import { validateTags, validateOutfits } from '../utils/validation';
 import { saveGender } from '../utils/storage';
 
+// 모듈 레벨 변수: 새로고침 시 false로 초기화됨
+let hasVisitedIntro = false;
+
 export function useOnboarding() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,10 +33,9 @@ export function useOnboarding() {
   const [currentOutfitTab, setCurrentOutfitTab] = useState(0);
 
   // 필수 데이터 누락 시 이전 단계로 리다이렉트
-  // 필수 데이터 누락 시 이전 단계로 리다이렉트
   useEffect(() => {
-    // Step 1: Intro를 거치지 않고 접근했거나(새로고침 등), state가 없으면 Intro로 리다이렉트
-    if (step === 1 && !location.state?.fromIntro) {
+    // Step 1: Intro를 거치지 않고 접근했거나(새로고침 등), hasVisitedIntro가 false면 Intro로 리다이렉트
+    if (step === 1 && !hasVisitedIntro) {
       navigate('/', { replace: true });
     }
     // Step 2 이상: 필수 데이터(성별)가 없으면 Intro로 리다이렉트
@@ -44,7 +46,7 @@ export function useOnboarding() {
     } else if (step > 3 && selectedOutfits.length === 0) {
       navigate('/step3', { replace: true });
     }
-  }, [step, gender, selectedTags.length, selectedOutfits.length, navigate, location.state]);
+  }, [step, gender, selectedTags.length, selectedOutfits.length, navigate]);
 
   // 성별 선택
   const selectGender = useCallback((selected) => {
@@ -105,7 +107,10 @@ export function useOnboarding() {
   // 다음 단계로
   const goToNextStep = useCallback(() => {
     if (step < 4) {
-      if (step === 0) navigate('/step1', { state: { fromIntro: true } });
+      if (step === 0) {
+        hasVisitedIntro = true; // Intro 방문 확인 플래그 설정
+        navigate('/step1');
+      }
       else if (step === 1) navigate('/step2');
       else if (step === 2) navigate('/step3');
       else if (step === 3) navigate('/result');

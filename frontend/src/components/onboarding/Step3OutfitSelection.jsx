@@ -41,7 +41,7 @@ export function Step3OutfitSelection({
         {currentTabOutfits.map((outfit, index) => {
           const isSelected = selectedOutfits.includes(outfit.id);
           return (
-            <div 
+            <div
               key={outfit.id}
               onClick={() => onToggleOutfit(outfit.id)}
               style={{ animationDelay: `${200 + index * 50}ms` }}
@@ -50,9 +50,9 @@ export function Step3OutfitSelection({
                 ${isSelected ? 'ring-4 ring-slate-900 ring-offset-2 ring-offset-white/0 shadow-xl' : 'hover:shadow-lg hover:-translate-y-1'}
               `}
             >
-              <img 
-                src={outfit.url} 
-                alt={outfit.alt} 
+              <img
+                src={outfit.url}
+                alt={outfit.alt}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className={`absolute inset-0 transition-colors duration-300 ${isSelected ? 'bg-black/20' : 'bg-transparent group-hover:bg-black/10'}`}>
@@ -67,11 +67,11 @@ export function Step3OutfitSelection({
         })}
       </div>
 
-      <div 
+      <div
         className="mt-auto pt-6 border-t border-slate-200/60 flex flex-col sm:flex-row justify-between items-center gap-4 stagger-item"
         style={{ animationDelay: '500ms' }}
       >
-        <button 
+        <button
           onClick={() => {
             if (currentTab === 0) onPrevious();
             else onTabChange(0);
@@ -81,7 +81,7 @@ export function Step3OutfitSelection({
           <ArrowLeft size={18} />
           이전으로
         </button>
-        
+
         {/* 페이지네이션 (중간) - Best Practice: 통합된 네비게이션 */}
         <div className="flex items-center gap-3">
           <button
@@ -89,23 +89,23 @@ export function Step3OutfitSelection({
             disabled={currentTab === 0}
             className={`
               p-2 rounded-full transition-all
-              ${currentTab === 0 
-                ? 'text-slate-300 cursor-not-allowed' 
+              ${currentTab === 0
+                ? 'text-slate-300 cursor-not-allowed'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
             `}
             aria-label="이전 페이지"
           >
             <ChevronLeft size={20} />
           </button>
-          
+
           {/* 페이지 인디케이터 */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => onTabChange(0)}
               className={`
                 w-2 h-2 rounded-full transition-all
-                ${currentTab === 0 
-                  ? 'bg-slate-900 w-8' 
+                ${currentTab === 0
+                  ? 'bg-slate-900 w-8'
                   : 'bg-slate-300 hover:bg-slate-400'}
               `}
               aria-label="페이지 1"
@@ -114,14 +114,14 @@ export function Step3OutfitSelection({
               onClick={() => onTabChange(1)}
               className={`
                 w-2 h-2 rounded-full transition-all
-                ${currentTab === 1 
-                  ? 'bg-slate-900 w-8' 
+                ${currentTab === 1
+                  ? 'bg-slate-900 w-8'
                   : 'bg-slate-300 hover:bg-slate-400'}
               `}
               aria-label="페이지 2"
             />
           </div>
-          
+
           <button
             onClick={() => {
               if (currentTab === 0) onTabChange(1);
@@ -129,8 +129,8 @@ export function Step3OutfitSelection({
             disabled={currentTab === 1}
             className={`
               p-2 rounded-full transition-all
-              ${currentTab === 1 
-                ? 'text-slate-300 cursor-not-allowed' 
+              ${currentTab === 1
+                ? 'text-slate-300 cursor-not-allowed'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
             `}
             aria-label="다음 페이지"
@@ -138,8 +138,8 @@ export function Step3OutfitSelection({
             <ChevronRight size={20} />
           </button>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => {
             if (currentTab === 0) onTabChange(1);
             else onComplete();
@@ -148,7 +148,7 @@ export function Step3OutfitSelection({
           className={`
             px-10 py-3.5 rounded-full font-bold text-white transition-all duration-300 flex items-center gap-2
             ${(currentTab === 0 || validation.isValid)
-              ? 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10 hover:translate-y-[-2px]' 
+              ? 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10 hover:translate-y-[-2px]'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed'}
           `}
         >

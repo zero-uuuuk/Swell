@@ -25,8 +25,8 @@ export function Step1GenderSelection({ gender, onSelect }) {
             className={`
               stagger-item relative aspect-square rounded-3xl text-xl font-bold transition-all duration-300
               flex flex-col items-center justify-center gap-4 group
-              ${gender === g 
-                ? 'bg-slate-900 text-white shadow-xl scale-105' 
+              ${gender === g
+                ? 'bg-slate-900 text-white shadow-xl scale-105'
                 : 'bg-white/60 hover:bg-white text-slate-700 hover:shadow-lg hover:-translate-y-1'}
             `}
           >
@@ -36,16 +36,16 @@ export function Step1GenderSelection({ gender, onSelect }) {
             `}>
               {g === '여성' ? (
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="10" r="4"/>
-                  <path d="M12 20v-6"/>
-                  <path d="M9 17h6"/>
+                  <circle cx="12" cy="10" r="4" />
+                  <path d="M12 20v-6" />
+                  <path d="M9 17h6" />
                 </svg>
               ) : (
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="10" cy="14" r="4"/>
-                  <path d="M13 11L21 3"/>
-                  <path d="M21 3h-6"/>
-                  <path d="M21 3v6"/>
+                  <circle cx="10" cy="14" r="4" />
+                  <path d="M13 11L21 3" />
+                  <path d="M21 3h-6" />
+                  <path d="M21 3v6" />
                 </svg>
               )}
             </div>

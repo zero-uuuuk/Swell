@@ -4,13 +4,13 @@
 import React from 'react';
 import { ArrowLeft, Check, ChevronRight } from 'lucide-react';
 
-export function Step2TagSelection({ 
+export function Step2TagSelection({
   tags = [], // API에서 받은 태그 목록 [{ id, name }, ...]
   selectedTagIds = [], // 선택된 태그 ID 배열
-  onToggleTag, 
-  onPrevious, 
-  onNext, 
-  validation 
+  onToggleTag,
+  onPrevious,
+  onNext,
+  validation
 }) {
   return (
     <div className="flex-1 flex flex-col animate-enter">
@@ -34,8 +34,8 @@ export function Step2TagSelection({
               className={`
                 stagger-item relative px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 ease-out
                 border group overflow-hidden break-keep
-                ${isSelected 
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20 scale-[1.02]' 
+                ${isSelected
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20 scale-[1.02]'
                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'}
               `}
             >
@@ -48,25 +48,25 @@ export function Step2TagSelection({
         })}
       </div>
 
-      <div 
+      <div
         className="mt-auto pt-6 border-t border-slate-200/60 flex flex-col sm:flex-row justify-between items-center gap-4 stagger-item"
         style={{ animationDelay: '600ms' }}
       >
         <div className="flex items-center gap-4">
           <button onClick={onPrevious} className="text-slate-500 hover:text-slate-800 transition-colors">
-            <ArrowLeft size={20}/>
+            <ArrowLeft size={20} />
           </button>
           <p className={`text-sm font-medium transition-colors ${!validation.isValid ? 'text-rose-500' : 'text-emerald-600'}`}>
             {validation.message}
           </p>
         </div>
-        <button 
+        <button
           onClick={onNext}
           disabled={!validation.isValid}
           className={`
             flex items-center gap-2 px-8 py-3.5 rounded-full font-bold transition-all duration-300
-            ${validation.isValid 
-              ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/10 hover:translate-y-[-2px]' 
+            ${validation.isValid
+              ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-900/10 hover:translate-y-[-2px]'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed'}
           `}
         >

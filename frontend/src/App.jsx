@@ -126,8 +126,9 @@ function App() {
 
       {/* 메인 컨테이너 */}
       <div className={`
-        relative z-10 w-full mx-4 my-8 flex flex-col bg-white/70 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-900/10 border border-white/60 overflow-hidden transition-all duration-700
-        ${onboarding.step === 4 ? 'max-w-[95vw] h-[92vh] min-h-[600px]' : 'max-w-5xl min-h-[700px]'}
+        relative z-10 w-full mx-4 my-8 flex flex-col bg-white/70 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-900/10 border border-white/60 overflow-hidden transition-all duration-700 ease-in-out
+        ${onboarding.step === 4 ? 'max-w-[95vw] h-[92vh] min-h-[600px]' :
+          onboarding.step === 0 ? 'max-w-6xl min-h-[800px]' : 'max-w-5xl min-h-[700px]'}
       `}>
 
         {/* 상단 진행 바 (Step 0에서는 숨김) */}
